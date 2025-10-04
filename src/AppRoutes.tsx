@@ -78,11 +78,13 @@ interface ProtectedRouteProps {
 function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
   const { state: { user, authLoading } } = useApp();
 
+  // Show loading while checking authentication
   if (authLoading) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
 
-  if (!user) {
+  // Only redirect to login if auth check is complete AND user is null
+  if (!authLoading && !user) {
     return <Navigate to="/login" replace />;
   }
 
