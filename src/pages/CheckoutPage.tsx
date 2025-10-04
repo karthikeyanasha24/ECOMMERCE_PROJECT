@@ -28,6 +28,8 @@ export function CheckoutPage() {
   const [calculatedTax, setCalculatedTax] = useState('0.00');
   const [calculatedFreight, setCalculatedFreight] = useState('0.00');
   const [calculatedGrandTotal, setCalculatedGrandTotal] = useState('0.00');
+  const [taxLabel, setTaxLabel] = useState('Tax');
+  const [shippingLabel, setShippingLabel] = useState('Shipping');
   const [calculationLoading, setCalculationLoading] = useState(false);
   const [calculationError, setCalculationError] = useState<string | null>(null);
 
@@ -117,6 +119,16 @@ export function CheckoutPage() {
       setCalculatedTax(data.totalTax.toFixed(2));
       setCalculatedFreight(data.totalFreight.toFixed(2));
       setCalculatedGrandTotal(data.grandTotal.toFixed(2));
+      
+      // Set dynamic tax label
+      if (data.taxInfo) {
+        setTaxLabel(data.taxInfo.taxLabel);
+      }
+      
+      // Set dynamic shipping label
+      if (data.shippingInfo) {
+        setShippingLabel(data.shippingInfo.label);
+      }
 
     } catch (err: any) {
       const errorMessage = err.message || 'Failed to calculate totals.';
@@ -361,21 +373,21 @@ export function CheckoutPage() {
               <span>{"$" + calculatedSubtotal}</span>
             </div>
             <div className="flex justify-between items-center text-lg text-brown-700 mb-3">
-              <span>Shipping</span>
+              <span>{shippingLabel}</span>
               {calculationLoading ? (
                 <span>Calculating...</span>
               ) : calculatedFreight === '--' ? (
-                <span className="text-brown-500">Select address</span>
+                <span>Select address</span>
               ) : (
                 <span>{"$" + calculatedFreight}</span>
               )}
             </div>
             <div className="flex justify-between items-center text-lg text-brown-700 mb-6">
-              <span>Tax (GST 10%)</span>
+              <span>{taxLabel}</span>
               {calculationLoading ? (
                 <span>Calculating...</span>
               ) : calculatedTax === '--' ? (
-                <span className="text-brown-500">Select address</span>
+                <span>Select address</span>
               ) : (
                 <span>{"$" + calculatedTax}</span>
               )}

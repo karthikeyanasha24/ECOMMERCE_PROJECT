@@ -71,7 +71,19 @@ export interface OrderCalculationResponse {
   totalTax: number;
   totalFreight: number;
   grandTotal: number;
-  breakdown: {
+  taxInfo?: {
+    taxType: string;
+    taxRate: number;
+    taxLabel: string;
+    isMixed?: boolean;
+    breakdown?: string[];
+  };
+  shippingInfo?: {
+    method: string;
+    label: string;
+  };
+  processedItems?: any[];
+  breakdown?: {
     sellers: Array<{
       sellerId: string;
       subtotal: number;

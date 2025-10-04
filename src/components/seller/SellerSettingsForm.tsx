@@ -3,61 +3,68 @@ import { Button } from '../ui/Button';
 
 interface SellerSettingsFormProps {
   initialData: {
-    tax_rate: number;
-    freight_rules: any;
+    tax_rate_override: number | null;
+    shipping_rules: any;
   };
-  onSubmit: (data: { tax_rate: number; freight_rules: any }) => void;
+  onSubmit: (data: { tax_rate_override: number | null; shipping_rules: any }) => void;
   loading: boolean;
   error: string | null;
 }
 
 export function SellerSettingsForm({ initialData, onSubmit, loading, error }: SellerSettingsFormProps) {
-  const [taxRate, setTaxRate] = useState(initialData.tax_rate || 0);
-  // NEW: Structured states for freight rules
+  const [taxRate, setTaxRate] = useState(
+    initialData.tax_rate_override ? initialData.tax_rate_override * 100 : 0
+  ); // Convert decimal to percentage for display
+  // NEW: Structured states for shipping rules
   const [freightType, setFreightType] = useState<'none' | 'flat_rate' | 'per_item' | 'free_shipping_threshold'>(
-    initialData.freight_rules?.type || 'none'
+    initialData.shipping_rules?.type || 'none'
   );
   const [freightCost, setFreightCost] = useState<number | null>(
-    initialData.freight_rules?.cost ?? null
+    initialData.shipping_rules?.cost ?? null
   );
   const [freeShippingThreshold, setFreeShippingThreshold] = useState<number | null>(
-    initialData.freight_rules?.free_shipping_threshold ?? null
+    initialData.shipping_rules?.free_shipping_threshold ?? null
   );
   
-  // NEW: Override states
-  const [overrideGlobalTax, setOverrideGlobalTax] = useState(initialData.override_global_tax || false);
-  const [overrideGlobalShipping, setOverrideGlobalShipping] = useState(initialData.override_global_shipping || false);
+  // Override states - determine based on whether values exist
+  const [overrideGlobalTax, setOverrideGlobalTax] = useState(initialData.tax_rate_override !== null);
+  const [overrideGlobalShipping, setOverrideGlobalShipping] = useState(
+    initialData.shipping_rules && Object.keys(initialData.shipping_rules).length > 0
+  );
 
 
   useEffect(() => {
-    setTaxRate(initialData.tax_rate || 0);
-    // NEW: Parse initial freight rules into structured states
-    setFreightType(initialData.freight_rules?.type || 'none');
-    setFreightCost(initialData.freight_rules?.cost ?? null);
-    setFreeShippingThreshold(initialData.freight_rules?.free_shipping_threshold ?? null);
+    setTaxRate(initialData.tax_rate_override ? initialData.tax_rate_override * 100 : 0);
+    // Parse initial shipping rules into structured states
+    setFreightType(initialData.shipping_rules?.type || 'none');
+    setFreightCost(initialData.shipping_rules?.cost ?? null);
+    setFreeShippingThreshold(initialData.shipping_rules?.free_shipping_threshold ?? null);
     
-    // NEW: Set override states
-    setOverrideGlobalTax(initialData.override_global_tax || false);
-    setOverrideGlobalShipping(initialData.override_global_shipping || false);
+    // Set override states based on whether values exist
+    setOverrideGlobalTax(initialData.tax_rate_override !== null);
+    setOverrideGlobalShipping(
+      initialData.shipping_rules && Object.keys(initialData.shipping_rules).length > 0
+    );
   }, [initialData]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // NEW: Construct freight_rules JSON from structured states
-    let constructedFreightRules: any = { type: freightType };
-    if (freightType === 'flat_rate' || freightType === 'per_item') {
-      constructedFreightRules.cost = freightCost;
+    
+    // Construct shipping_rules JSON from structured states
+    let constructedShippingRules: any = {};
+    if (overrideGlobalShipping) {
+      constructedShippingRules = { type: freightType };
+      if (freightType === 'flat_rate' || freightType === 'per_item') {
+        constructedShippingRules.cost = freightCost;
+      }
+      if (freightType === 'free_shipping_threshold') {
+        constructedShippingRules.free_shipping_threshold = freeShippingThreshold;
+      }
     }
-    if (freightType === 'free_shipping_threshold') {
-      constructedFreightRules.free_shipping_threshold = freeShippingThreshold;
-    }
-    // If type is 'none', freight_rules will just be { type: 'none' }
 
     onSubmit({
-      tax_rate: taxRate,
-      freight_rules: constructedFreightRules,
-      override_global_tax: overrideGlobalTax,
-      override_global_shipping: overrideGlobalShipping,
+      tax_rate_override: overrideGlobalTax ? taxRate / 100 : null, // Convert percentage to decimal
+      shipping_rules: constructedShippingRules,
     });
   };
 
