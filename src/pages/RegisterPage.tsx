@@ -11,6 +11,10 @@ export function RegisterPage() {
   const [lastName, setLastName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [emailConfirmationRequired, setEmailConfirmationRequired] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState('');
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendMessage, setResendMessage] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -19,13 +23,14 @@ export function RegisterPage() {
     setError(null);
 
     try {
-      const { data: { user }, error: signUpError } = await supabase.auth.signUp({
+      const { data: { user, session }, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
             first_name: firstName,
             last_name: lastName,
+            role: 'customer',
           },
         },
       });
@@ -34,34 +39,96 @@ export function RegisterPage() {
         throw signUpError;
       }
 
-      // Update user profile with first_name and last_name
-      if (user) {
-        try {
-          const { error: profileError } = await supabase
-            .from('user_profiles')
-            .upsert({
-              id: user.id,
-              first_name: firstName,
-              last_name: lastName,
-            });
-
-          if (profileError) {
-            console.error('Error updating user profile:', profileError);
-            // Note: We don't throw here because the main registration was successful
-          }
-        } catch (profileErr) {
-          console.error('Error during profile update:', profileErr);
-        }
+      if (!user) {
+        throw new Error('Registration failed. Please try again.');
       }
 
-      // Redirect to account dashboard after successful registration
-      navigate('/account');
+      setRegisteredEmail(email);
+
+      if (!session) {
+        setEmailConfirmationRequired(true);
+      } else {
+        navigate('/account');
+      }
     } catch (error: any) {
       setError(error.message || 'An error occurred during registration');
     } finally {
       setLoading(false);
     }
   };
+
+  const handleResendConfirmation = async () => {
+    setResendLoading(true);
+    setResendMessage(null);
+
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: registeredEmail,
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      setResendMessage('Confirmation email sent successfully! Please check your inbox.');
+    } catch (error: any) {
+      setResendMessage(error.message || 'Failed to resend confirmation email. Please try again.');
+    } finally {
+      setResendLoading(false);
+    }
+  };
+
+  if (emailConfirmationRequired) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-brown-100">
+        <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+          <div className="text-center">
+            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
+              <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-bold text-brown-900 mb-4">
+              Check Your Email
+            </h2>
+            <p className="text-brown-700 mb-2">
+              A confirmation link has been sent to:
+            </p>
+            <p className="font-semibold text-brown-900 mb-4">
+              {registeredEmail}
+            </p>
+            <p className="text-sm text-brown-600 mb-6">
+              Please check your inbox and click the confirmation link to activate your account.
+              Don't forget to check your spam or junk folder if you don't see it.
+            </p>
+            {resendMessage && (
+              <div className={`mb-4 p-3 rounded-md text-sm ${
+                resendMessage.includes('successfully')
+                  ? 'bg-green-50 text-green-700'
+                  : 'bg-red-50 text-red-700'
+              }`}>
+                {resendMessage}
+              </div>
+            )}
+            <Button
+              onClick={handleResendConfirmation}
+              disabled={resendLoading}
+              className="w-full mb-4"
+            >
+              {resendLoading ? 'Sending...' : 'Resend Confirmation Email'}
+            </Button>
+            <Link
+              to="/login"
+              className="text-sm text-brown-600 hover:text-brown-500 underline"
+            >
+              Back to Login
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-brown-100">

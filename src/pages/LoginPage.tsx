@@ -9,6 +9,9 @@ export function LoginPage() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showResendConfirmation, setShowResendConfirmation] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendMessage, setResendMessage] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -52,9 +55,37 @@ export function LoginPage() {
         navigate('/account'); // Default for 'customer' or other roles
       }
     } catch (error: any) {
-      setError(error.message || 'An error occurred during login');
+      const errorMessage = error.message || 'An error occurred during login';
+      setError(errorMessage);
+
+      if (errorMessage.toLowerCase().includes('email') && errorMessage.toLowerCase().includes('confirm')) {
+        setShowResendConfirmation(true);
+      }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendConfirmation = async () => {
+    setResendLoading(true);
+    setResendMessage(null);
+
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: email,
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      setResendMessage('Confirmation email sent successfully! Please check your inbox.');
+      setShowResendConfirmation(false);
+    } catch (error: any) {
+      setResendMessage(error.message || 'Failed to resend confirmation email. Please try again.');
+    } finally {
+      setResendLoading(false);
     }
   };
 
@@ -83,8 +114,30 @@ export function LoginPage() {
           </p>
         </div>
         {error && (
-          <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm">
+          <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm mb-4">
             {error}
+            {showResendConfirmation && (
+              <div className="mt-3">
+                <p className="mb-2 text-sm">Please confirm your email address to login.</p>
+                <Button
+                  type="button"
+                  onClick={handleResendConfirmation}
+                  disabled={resendLoading}
+                  className="w-full"
+                >
+                  {resendLoading ? 'Sending...' : 'Resend Confirmation Email'}
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+        {resendMessage && (
+          <div className={`mb-4 p-3 rounded-md text-sm ${
+            resendMessage.includes('successfully')
+              ? 'bg-green-50 text-green-700'
+              : 'bg-red-50 text-red-700'
+          }`}>
+            {resendMessage}
           </div>
         )}
         <form className="mt-8 space-y-6" onSubmit={handleLogin}>
