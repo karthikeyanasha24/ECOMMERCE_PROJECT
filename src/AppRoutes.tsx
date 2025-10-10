@@ -70,6 +70,8 @@ import { SellerEditCategoryPage } from './pages/SellerEditCategoryPage';
 import { SellerSettingsPage } from './pages/SellerSettingsPage';
 import { SellerApplicationPage } from './pages/SellerApplicationPage';
 import { AdminSellerApplicationsPage } from './pages/AdminSellerApplicationsPage';
+import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
+import { ResetPasswordPage } from './pages/ResetPasswordPage';
 
 // ProtectedRoute component to guard routes based on authentication
 interface ProtectedRouteProps {
@@ -112,7 +114,7 @@ export function AppRoutes() {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith('/admin');
   const isSellerRoute = location.pathname.startsWith('/seller');
-  const isAuthRoute = location.pathname === '/register' || location.pathname === '/login' || location.pathname === '/seller-register';
+  const isAuthRoute = location.pathname === '/register' || location.pathname === '/login' || location.pathname === '/seller-register' || location.pathname === '/forgot-password' || location.pathname === '/reset-password';
 
   return (
     <div className="min-h-screen bg-brown-300 overflow-x-hidden">
@@ -135,6 +137,8 @@ export function AppRoutes() {
           <Route path="/products/:slug" element={<ProductDetailPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/cart" element={<CartPage />} />
           <Route path="/services" element={<ServicesPage />} />
           <Route path="/services/:slug" element={<ServiceDetailPage />} />
