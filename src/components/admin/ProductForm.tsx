@@ -46,11 +46,6 @@ export function ProductForm({ initialData, onSubmit, loading, error }: ProductFo
   const [isTaxable, setIsTaxable] = useState(initialData?.is_taxable ?? true);
   const [isShippingExempt, setIsShippingExempt] = useState(initialData?.is_shipping_exempt ?? false);
 
-  // NEW: Installation service states
-  const [hasInstallation, setHasInstallation] = useState(initialData?.has_installation || false);
-  const [installationPrice, setInstallationPrice] = useState<number | null>(initialData?.installation_price ?? null);
-  const [installationDescription, setInstallationDescription] = useState(initialData?.installation_description || '');
-
 
   useEffect(() => {
     if (initialData) {
@@ -75,11 +70,6 @@ export function ProductForm({ initialData, onSubmit, loading, error }: ProductFo
       setCustomShippingCost(initialData.custom_shipping_cost ?? null);
       setIsTaxable(initialData.is_taxable ?? true);
       setIsShippingExempt(initialData.is_shipping_exempt ?? false);
-
-      // NEW: Set installation service states from initialData
-      setHasInstallation(initialData.has_installation || false);
-      setInstallationPrice(initialData.installation_price ?? null);
-      setInstallationDescription(initialData.installation_description || '');
     }
   }, [initialData]);
 
@@ -173,11 +163,6 @@ export function ProductForm({ initialData, onSubmit, loading, error }: ProductFo
       custom_shipping_cost: overrideGlobalSettings ? customShippingCost : null,
       isTaxable,
       isShippingExempt,
-
-      // NEW: Pass installation service data
-      has_installation: hasInstallation,
-      installation_price: hasInstallation ? installationPrice : null,
-      installation_description: hasInstallation ? installationDescription : '',
     });
   };
 
@@ -419,61 +404,6 @@ export function ProductForm({ initialData, onSubmit, loading, error }: ProductFo
             <label htmlFor="isShippingExempt" className="ml-2 block text-sm text-gray-900">
               Is Shipping Exempt
             </label>
-          </div>
-        </div>
-
-        {/* NEW: Installation Service Section */}
-        <div className="border-t pt-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Installation Service</h3>
-          <div className="space-y-4">
-            <div className="flex items-center">
-              <input
-                id="hasInstallation"
-                name="hasInstallation"
-                type="checkbox"
-                checked={hasInstallation}
-                onChange={(e) => setHasInstallation(e.target.checked)}
-                className="h-4 w-4 text-brown-600 focus:ring-brown-500 border-gray-300 rounded"
-              />
-              <label htmlFor="hasInstallation" className="ml-2 block text-sm text-gray-900">
-                Offer Installation Service
-              </label>
-            </div>
-
-            {hasInstallation && (
-              <>
-                <div>
-                  <label htmlFor="installationPrice" className="block text-sm font-medium text-gray-700">
-                    Installation Price
-                  </label>
-                  <input
-                    type="number"
-                    id="installationPrice"
-                    value={installationPrice ?? ''}
-                    onChange={(e) => setInstallationPrice(e.target.value ? parseFloat(e.target.value) : null)}
-                    step="0.01"
-                    min="0"
-                    required={hasInstallation}
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-brown-500 focus:border-brown-500 sm:text-sm"
-                    placeholder="0.00"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="installationDescription" className="block text-sm font-medium text-gray-700">
-                    Installation Description
-                  </label>
-                  <textarea
-                    id="installationDescription"
-                    value={installationDescription}
-                    onChange={(e) => setInstallationDescription(e.target.value)}
-                    rows={3}
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-brown-500 focus:border-brown-500 sm:text-sm"
-                    placeholder="Describe what the installation service includes..."
-                  />
-                </div>
-              </>
-            )}
           </div>
         </div>
 

@@ -25,8 +25,6 @@ import { RegisterPage } from './pages/RegisterPage';
 import { AccountDashboardPage } from './pages/AccountDashboardPage';
 import { CartPage } from './pages/CartPage';
 import { LoginPage } from './pages/LoginPage';
-import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
-import { ResetPasswordPage } from './pages/ResetPasswordPage';
 import { CheckoutPage } from './pages/CheckoutPage';
 import { OrderConfirmationPage } from './pages/OrderConfirmationPage';
 import { WishlistPage } from './pages/WishlistPage';
@@ -112,7 +110,7 @@ export function AppRoutes() {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith('/admin');
   const isSellerRoute = location.pathname.startsWith('/seller');
-  const isAuthRoute = location.pathname === '/register' || location.pathname === '/login' || location.pathname === '/seller-register' || location.pathname === '/forgot-password' || location.pathname === '/reset-password';
+  const isAuthRoute = location.pathname === '/register' || location.pathname === '/login' || location.pathname === '/seller-register';
 
   return (
     <div className="min-h-screen bg-brown-300 overflow-x-hidden">
@@ -135,8 +133,6 @@ export function AppRoutes() {
           <Route path="/products/:slug" element={<ProductDetailPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-          <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/cart" element={<CartPage />} />
           <Route path="/services" element={<ServicesPage />} />
           <Route path="/services/:slug" element={<ServiceDetailPage />} />
