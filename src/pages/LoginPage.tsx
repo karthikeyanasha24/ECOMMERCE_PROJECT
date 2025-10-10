@@ -46,10 +46,14 @@ export function LoginPage() {
         throw new Error('Failed to retrieve user profile after login.');
       }
 
-      // Redirect based on user role
+      // Block admin users from logging in through regular login
       if (profile.role === 'admin') {
-        navigate('/admin');
-      } else if (profile.role === 'seller') {
+        await supabase.auth.signOut();
+        throw new Error('Admin users must login through the Admin Login page at /admin-login');
+      }
+
+      // Redirect based on user role
+      if (profile.role === 'seller') {
         navigate('/seller');
       } else {
         navigate('/account'); // Default for 'customer' or other roles
