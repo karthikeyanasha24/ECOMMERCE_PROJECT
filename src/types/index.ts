@@ -26,6 +26,12 @@ export interface Product {
   custom_tax_rate?: number | null;
   custom_shipping_cost?: number | null;
   seller_id?: string | null; // NEW: For permission checks
+  // NEW: Installation service fields
+  has_installation?: boolean;
+  installation_price?: number | null;
+  installation_description?: string;
+  is_taxable?: boolean;
+  is_shipping_exempt?: boolean;
 }
 
 export interface ProductVariant {
@@ -64,6 +70,8 @@ export interface CartItem {
   created_at: string;
   products: Product; // Nested product object from join
   product_variants: ProductVariant | null; // Nested variant object from join
+  installation_selected?: boolean; // NEW: Whether customer selected installation
+  installation_price?: number; // NEW: Installation price at time of adding to cart
 }
 
 export interface User {
@@ -101,7 +109,7 @@ export interface Order {
   shippingAddress: Address;
   billingAddress: Address;
   createdAt: string;
-  deliveryMethod: 'shipping' | 'click-collect';
+  deliveryMethod: 'shipping' | 'click-collect' | 'pickup'; // NEW: Added pickup option
 }
 
 export interface Service {
