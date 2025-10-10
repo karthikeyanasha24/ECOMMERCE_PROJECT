@@ -15,8 +15,10 @@ import {
   BookOpen,
   Settings,
   ArrowRight,
+  ClipboardList,
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
+import { supabase } from '../lib/supabase';
 
 export function AdminDashboardPage() {
   const { fetchAllOrders, loading: ordersLoading, error: ordersError } = useAdminOrders();
@@ -30,6 +32,7 @@ export function AdminDashboardPage() {
   const [totalProducts, setTotalProducts] = useState(0);
   const [totalArticles, setTotalArticles] = useState(0);
   const [totalServices, setTotalServices] = useState(0);
+  const [pendingApplications, setPendingApplications] = useState(0);
 
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
   const [recentUsers, setRecentUsers] = useState<any[]>([]);
@@ -50,12 +53,14 @@ export function AdminDashboardPage() {
           productsData,
           articlesData,
           servicesData,
+          applicationsResult,
         ] = await Promise.all([
           fetchAllOrders(),
           fetchAllUserProfiles(),
           fetchAllProducts(),
           fetchAllDIYArticles(),
           fetchAllServices(),
+          supabase.from('seller_applications').select('id').eq('status', 'pending'),
         ]);
 
         // Update summary counts
@@ -64,6 +69,7 @@ export function AdminDashboardPage() {
         setTotalProducts(productsData?.length || 0);
         setTotalArticles(articlesData?.length || 0);
         setTotalServices(servicesData?.length || 0);
+        setPendingApplications(applicationsResult?.data?.length || 0);
 
         // Set recent orders without fetching additional user info
         if (ordersData) {
@@ -109,6 +115,27 @@ export function AdminDashboardPage() {
   return (
     <div>
       <h2 className="text-3xl font-bold text-brown-900 mb-6">Admin Dashboard</h2>
+
+      {/* Pending Applications Alert */}
+      {pendingApplications > 0 && (
+        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <ClipboardList className="h-5 w-5 text-yellow-400" />
+            </div>
+            <div className="ml-3 flex-1">
+              <p className="text-sm text-yellow-700">
+                You have <strong>{pendingApplications}</strong> pending seller {pendingApplications === 1 ? 'application' : 'applications'} awaiting review.
+              </p>
+            </div>
+            <div className="ml-auto pl-3">
+              <Link to="/admin/seller-applications">
+                <Button size="sm">Review Applications</Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-8">

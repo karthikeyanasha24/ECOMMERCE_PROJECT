@@ -1,7 +1,7 @@
 // src/components/layout/AdminSidebar.tsx
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Package, List, Users, ShoppingBag, BookOpen, Settings, X } from 'lucide-react';
+import { LayoutDashboard, Package, List, Users, ShoppingBag, BookOpen, Settings, X, ClipboardList } from 'lucide-react';
 
 interface AdminSidebarProps {
   isSidebarOpen: boolean;
@@ -17,6 +17,7 @@ export function AdminSidebar({ isSidebarOpen, toggleSidebar }: AdminSidebarProps
     { path: '/admin/categories', icon: List, label: 'Categories & Depts.' },
     { path: '/admin/orders', icon: ShoppingBag, label: 'Orders' },
     { path: '/admin/users', icon: Users, label: 'Users' },
+    { path: '/admin/seller-applications', icon: ClipboardList, label: 'Seller Applications' },
     { path: '/admin/articles', icon: BookOpen, label: 'DIY Articles' },
     { path: '/admin/services', icon: Settings, label: 'Services' },
     { path: '/admin/settings', icon: Settings, label: 'Global Settings' },

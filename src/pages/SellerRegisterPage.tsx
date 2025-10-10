@@ -48,7 +48,7 @@ export function SellerRegisterPage() {
       if (!session) {
         setEmailConfirmationRequired(true);
       } else {
-        navigate('/seller');
+        navigate('/seller-application');
       }
     } catch (error: any) {
       setError(error.message || 'An error occurred during registration');

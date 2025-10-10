@@ -68,6 +68,8 @@ import { SellerCategoryDepartmentListPage } from './pages/SellerCategoryDepartme
 import { SellerAddCategoryPage } from './pages/SellerAddCategoryPage';
 import { SellerEditCategoryPage } from './pages/SellerEditCategoryPage';
 import { SellerSettingsPage } from './pages/SellerSettingsPage';
+import { SellerApplicationPage } from './pages/SellerApplicationPage';
+import { AdminSellerApplicationsPage } from './pages/AdminSellerApplicationsPage';
 
 // ProtectedRoute component to guard routes based on authentication
 interface ProtectedRouteProps {
@@ -140,6 +142,14 @@ export function AppRoutes() {
           <Route path="/diy-advice/:slug" element={<DIYArticleDetailPage />} />
           <Route path="/wishlist" element={<WishlistPage />} />
           <Route path="/seller-register" element={<SellerRegisterPage />} />
+          <Route
+            path="/seller-application"
+            element={
+              <ProtectedRoute>
+                <SellerApplicationPage />
+              </ProtectedRoute>
+            }
+          />
           {/* Protected User Routes (Customer/General User) */}
           <Route
             path="/account"
@@ -194,6 +204,8 @@ export function AppRoutes() {
                     <Route path="services/:id/edit" element={<AdminEditServicePage />} />
                     {/* Admin Global Settings Route */}
                     <Route path="settings" element={<AdminGlobalSettingsPage />} />
+                    {/* Admin Seller Applications Route */}
+                    <Route path="seller-applications" element={<AdminSellerApplicationsPage />} />
                   </Routes>
                 </AdminLayout>
               </ProtectedRoute>

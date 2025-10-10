@@ -184,3 +184,38 @@ export interface OrderItem {
   installation_price?: number;
   created_at: string;
 }
+
+export interface SellerApplication {
+  id: string;
+  user_id: string;
+  business_name: string;
+  business_type: 'sole_trader' | 'partnership' | 'company' | 'trust';
+  abn: string;
+  business_address: {
+    address1: string;
+    address2?: string;
+    city: string;
+    state: string;
+    postcode: string;
+    country: string;
+  };
+  contact_person: string;
+  contact_phone: string;
+  contact_email: string;
+  website?: string;
+  description: string;
+  bank_account_name: string;
+  bank_bsb: string;
+  bank_account_number: string;
+  documents?: Array<{
+    name: string;
+    url: string;
+    type: string;
+  }>;
+  status: 'pending' | 'approved' | 'rejected';
+  rejection_reason?: string;
+  reviewed_by?: string;
+  reviewed_at?: string;
+  created_at: string;
+  updated_at: string;
+}
