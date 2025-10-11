@@ -67,6 +67,8 @@ import { SellerEditProductPage } from './pages/SellerEditProductPage';
 import { SellerCategoryDepartmentListPage } from './pages/SellerCategoryDepartmentListPage';
 import { SellerAddCategoryPage } from './pages/SellerAddCategoryPage';
 import { SellerEditCategoryPage } from './pages/SellerEditCategoryPage';
+import { SellerAddDepartmentPage } from './pages/SellerAddDepartmentPage';
+import { SellerEditDepartmentPage } from './pages/SellerEditDepartmentPage';
 import { SellerSettingsPage } from './pages/SellerSettingsPage';
 import { SellerApplicationPage } from './pages/SellerApplicationPage';
 import { AdminSellerApplicationsPage } from './pages/AdminSellerApplicationsPage';
@@ -229,6 +231,8 @@ export function AppRoutes() {
                     <Route path="categories" element={<SellerCategoryDepartmentListPage />} />
                     <Route path="categories/new-category" element={<SellerAddCategoryPage />} />
                     <Route path="categories/categories/:id/edit" element={<SellerEditCategoryPage />} />
+                    <Route path="categories/new-department" element={<SellerAddDepartmentPage />} />
+                    <Route path="categories/departments/:id/edit" element={<SellerEditDepartmentPage />} />
                     <Route path="settings" element={<SellerSettingsPage />} />
                   </Routes>
                 </SellerLayout>

@@ -5,6 +5,7 @@ import { DepartmentForm } from '../components/admin/DepartmentForm'; // Re-use e
 import { useSellerCategories } from '../hooks/useSupabase'; // Use new seller hook
 import { Department } from '../types';
 import { useApp } from '../contexts/AppContext'; // To get current user's ID
+import { Button } from '../components/ui/Button';
 
 export function SellerEditDepartmentPage() {
   const { id } = useParams<{ id: string }>();

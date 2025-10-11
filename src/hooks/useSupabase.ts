@@ -1215,10 +1215,102 @@ export function useSellerCategories(sellerId: string | null) {
     }
   }, [sellerId]);
 
+  const fetchDepartmentById = useCallback(async (id: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { data, error } = await supabase
+        .from('departments')
+        .select('*')
+        .eq('id', id)
+        .single();
+      if (error) throw error;
+      return data;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch department');
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const addDepartment = useCallback(async (departmentData: Tables['departments']['Insert']) => {
+    if (!sellerId) {
+      setError('Seller ID is required to add department.');
+      return null;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const { data, error } = await supabase
+        .from('departments')
+        .insert(departmentData)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to add department');
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, [sellerId]);
+
+  const updateDepartment = useCallback(async (id: string, departmentData: Tables['departments']['Update']) => {
+    if (!sellerId) {
+      setError('Seller ID is required to update department.');
+      return null;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const { data, error } = await supabase
+        .from('departments')
+        .update(departmentData)
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update department');
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, [sellerId]);
+
+  const deleteDepartment = useCallback(async (id: string) => {
+    if (!sellerId) {
+      setError('Seller ID is required to delete department.');
+      return false;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const { error } = await supabase
+        .from('departments')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+      return true;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete department');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }, [sellerId]);
+
   return {
     loading,
     error,
     fetchAllDepartmentsWithCategories,
+    fetchDepartmentById,
+    addDepartment,
+    updateDepartment,
+    deleteDepartment,
     fetchCategoryById,
     addCategory,
     updateCategory,
