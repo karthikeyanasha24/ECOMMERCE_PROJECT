@@ -170,6 +170,17 @@ CREATE TABLE public.orders (
   CONSTRAINT orders_billing_address_id_fkey FOREIGN KEY (billing_address_id) REFERENCES public.addresses(id),
   CONSTRAINT orders_carrier_id_fkey FOREIGN KEY (carrier_id) REFERENCES public.shipping_carriers(id)
 );
+CREATE TABLE public.password_reset_tokens (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  token text NOT NULL UNIQUE,
+  expires_at timestamp with time zone NOT NULL,
+  used boolean DEFAULT false,
+  used_at timestamp with time zone,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT password_reset_tokens_pkey PRIMARY KEY (id),
+  CONSTRAINT password_reset_tokens_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
 CREATE TABLE public.product_variants (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   product_id uuid,
@@ -212,6 +223,32 @@ CREATE TABLE public.products (
   CONSTRAINT products_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.categories(id),
   CONSTRAINT products_department_id_fkey FOREIGN KEY (department_id) REFERENCES public.departments(id),
   CONSTRAINT products_seller_id_fkey FOREIGN KEY (seller_id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.seller_applications (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid,
+  business_name text NOT NULL,
+  business_type text NOT NULL CHECK (business_type = ANY (ARRAY['sole_trader'::text, 'partnership'::text, 'company'::text, 'trust'::text])),
+  abn text NOT NULL,
+  business_address jsonb NOT NULL DEFAULT '{}'::jsonb,
+  contact_person text NOT NULL,
+  contact_phone text NOT NULL,
+  contact_email text NOT NULL,
+  website text,
+  description text NOT NULL,
+  bank_account_name text NOT NULL,
+  bank_bsb text NOT NULL,
+  bank_account_number text NOT NULL,
+  documents jsonb DEFAULT '[]'::jsonb,
+  status text DEFAULT 'pending'::text CHECK (status = ANY (ARRAY['pending'::text, 'approved'::text, 'rejected'::text])),
+  rejection_reason text,
+  reviewed_by uuid,
+  reviewed_at timestamp with time zone,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT seller_applications_pkey PRIMARY KEY (id),
+  CONSTRAINT seller_applications_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
+  CONSTRAINT seller_applications_reviewed_by_fkey FOREIGN KEY (reviewed_by) REFERENCES auth.users(id)
 );
 CREATE TABLE public.seller_settings (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
