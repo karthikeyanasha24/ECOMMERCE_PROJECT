@@ -16,7 +16,7 @@ export default defineConfig({
     // Proxy Edge Functions during development
     proxy: {
       '/functions': {
-        target: process.env.VITE_SUPABASE_URL || 'https://yoaurficxcpzbqhaeptl.supabase.co',
+        target: process.env.VITE_SUPABASE_URL || 'https://kazatbfpvpalauoshzti.supabase.co',
         changeOrigin: true,
         secure: true,
         headers: {
