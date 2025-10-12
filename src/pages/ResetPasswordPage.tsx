@@ -19,7 +19,20 @@ export function ResetPasswordPage() {
 
       try {
         const hashParams = new URLSearchParams(location.hash.substring(1));
+        const errorParam = hashParams.get('error');
+        const errorDescription = hashParams.get('error_description');
+
+        if (errorParam) {
+          const decodedError = errorDescription
+            ? decodeURIComponent(errorDescription.replace(/\+/g, ' '))
+            : 'Invalid or expired reset link';
+          setError(decodedError);
+          setValidatingToken(false);
+          return;
+        }
+
         const accessToken = hashParams.get('access_token');
+        const refreshToken = hashParams.get('refresh_token');
         const type = hashParams.get('type');
 
         if (!accessToken || type !== 'recovery') {
@@ -28,18 +41,23 @@ export function ResetPasswordPage() {
           return;
         }
 
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        const { data, error: sessionError } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken || '',
+        });
 
         if (sessionError) {
           console.error('Session error:', sessionError);
-          setError('Failed to validate reset link. Please try again.');
+          if (sessionError.message.includes('expired')) {
+            setError('Your reset link has expired. Please request a new password reset.');
+          } else {
+            setError('Failed to validate reset link. Please try again.');
+          }
           setValidatingToken(false);
           return;
         }
 
-        if (!session) {
+        if (!data.session) {
           setError('Invalid or expired reset link. Please request a new password reset.');
           setValidatingToken(false);
           return;
@@ -73,11 +91,24 @@ export function ResetPasswordPage() {
     setLoading(true);
 
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+
+      if (!sessionData.session) {
+        setError('Your session has expired. Please request a new password reset link.');
+        setLoading(false);
+        return;
+      }
+
       const { error: updateError } = await supabase.auth.updateUser({
         password: password,
       });
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error('Update error:', updateError);
+        throw updateError;
+      }
+
+      await supabase.auth.signOut();
 
       setSuccess(true);
 
@@ -85,7 +116,12 @@ export function ResetPasswordPage() {
         navigate('/login');
       }, 3000);
     } catch (error: any) {
-      setError(error.message || 'Failed to reset password');
+      console.error('Reset password error:', error);
+      if (error.message.includes('session')) {
+        setError('Your session has expired. Please request a new password reset link.');
+      } else {
+        setError(error.message || 'Failed to reset password. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
