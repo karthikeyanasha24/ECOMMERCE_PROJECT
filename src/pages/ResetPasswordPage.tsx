@@ -19,8 +19,13 @@ export function ResetPasswordPage() {
 
       try {
         const hashParams = new URLSearchParams(location.hash.substring(1));
-        const errorParam = hashParams.get('error');
-        const errorDescription = hashParams.get('error_description');
+        const queryParams = new URLSearchParams(location.search);
+
+        const token = hashParams.get('access_token') || hashParams.get('token') || queryParams.get('token');
+        const type = hashParams.get('type') || queryParams.get('type');
+
+        const errorParam = hashParams.get('error') || queryParams.get('error');
+        const errorDescription = hashParams.get('error_description') || queryParams.get('error_description');
 
         if (errorParam) {
           const decodedError = errorDescription
@@ -31,12 +36,24 @@ export function ResetPasswordPage() {
           return;
         }
 
-        const type = hashParams.get('type');
-
-        if (type !== 'recovery') {
+        if (!token || type !== 'recovery') {
           setError('Invalid reset link. Please request a new password reset.');
           setValidatingToken(false);
           return;
+        }
+
+        if (queryParams.get('token')) {
+          const { error: exchangeError } = await supabase.auth.verifyOtp({
+            token_hash: token,
+            type: 'recovery'
+          });
+
+          if (exchangeError) {
+            console.error('Token exchange error:', exchangeError);
+            setError('Failed to validate reset link. Please request a new one.');
+            setValidatingToken(false);
+            return;
+          }
         }
 
         let retryCount = 0;
