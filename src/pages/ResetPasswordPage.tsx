@@ -31,38 +31,24 @@ export function ResetPasswordPage() {
           return;
         }
 
-        const accessToken = hashParams.get('access_token');
-        const refreshToken = hashParams.get('refresh_token');
-        const type = hashParams.get('type');
+        await new Promise(resolve => setTimeout(resolve, 500));
 
-        if (!accessToken || type !== 'recovery') {
-          setError('Invalid reset link. Please request a new password reset.');
-          setValidatingToken(false);
-          return;
-        }
-
-        const { data, error: sessionError } = await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken || '',
-        });
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
         if (sessionError) {
           console.error('Session error:', sessionError);
-          if (sessionError.message.includes('expired')) {
-            setError('Your reset link has expired. Please request a new password reset.');
-          } else {
-            setError('Failed to validate reset link. Please try again.');
-          }
+          setError('Failed to validate reset link. Please try again.');
           setValidatingToken(false);
           return;
         }
 
-        if (!data.session) {
+        if (!session) {
           setError('Invalid or expired reset link. Please request a new password reset.');
           setValidatingToken(false);
           return;
         }
 
+        console.log('Session established successfully for password reset');
         setValidatingToken(false);
       } catch (err) {
         console.error('Error validating token:', err);
