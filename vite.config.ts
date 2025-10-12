@@ -20,7 +20,7 @@ export default defineConfig({
         changeOrigin: true,
         secure: true,
         headers: {
-          'Authorization': `Bearer ${process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlvYXVyZmljeGNwemJxaGFlcHRsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0MTM2NzAsImV4cCI6MjA3NDk4OTY3MH0.i30uYs_5b_F0GHUEdu9uQ67hHgEaOLcNIbjfMbQ5vh8'}`,
+          'Authorization': `Bearer ${process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImthemF0YmZwdnBhbGF1b3NoenRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk5MjU1NjksImV4cCI6MjA3NTUwMTU2OX0.r5n67JGpY7yw1pHGP7KAi9wA7_MhsiiYE-nWgYr_bj0'}`,
         },
       },
     },
