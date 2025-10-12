@@ -31,25 +31,62 @@ export function ResetPasswordPage() {
           return;
         }
 
-        await new Promise(resolve => setTimeout(resolve, 500));
+        const type = hashParams.get('type');
 
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-        if (sessionError) {
-          console.error('Session error:', sessionError);
-          setError('Failed to validate reset link. Please try again.');
+        if (type !== 'recovery') {
+          setError('Invalid reset link. Please request a new password reset.');
           setValidatingToken(false);
           return;
         }
 
-        if (!session) {
-          setError('Invalid or expired reset link. Please request a new password reset.');
-          setValidatingToken(false);
-          return;
+        let retryCount = 0;
+        const maxRetries = 3;
+        let lastError = null;
+
+        while (retryCount < maxRetries) {
+          try {
+            await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
+
+            const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+            if (sessionError) {
+              if (sessionError.message.includes('issued in the future') ||
+                  sessionError.message.includes('clock skew')) {
+                lastError = sessionError;
+                retryCount++;
+                continue;
+              }
+
+              console.error('Session error:', sessionError);
+              setError('Failed to validate reset link. Please try again.');
+              setValidatingToken(false);
+              return;
+            }
+
+            if (!session) {
+              setError('Invalid or expired reset link. Please request a new password reset.');
+              setValidatingToken(false);
+              return;
+            }
+
+            console.log('Session established successfully for password reset');
+            setValidatingToken(false);
+            return;
+          } catch (err: any) {
+            if (err.message?.includes('issued in the future') ||
+                err.message?.includes('clock skew')) {
+              lastError = err;
+              retryCount++;
+              continue;
+            }
+            throw err;
+          }
         }
 
-        console.log('Session established successfully for password reset');
+        console.error('Failed after retries:', lastError);
+        setError('Unable to validate reset link due to timing issues. Please request a new password reset or try again in a few moments.');
         setValidatingToken(false);
+
       } catch (err) {
         console.error('Error validating token:', err);
         setError('An unexpected error occurred. Please try again.');
