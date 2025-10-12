@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Button } from '../components/ui/Button';
 
@@ -9,17 +9,52 @@ export function ResetPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [validatingToken, setValidatingToken] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        setError('Invalid or expired reset link. Please request a new password reset.');
+    const validateResetToken = async () => {
+      setValidatingToken(true);
+
+      try {
+        const hashParams = new URLSearchParams(location.hash.substring(1));
+        const accessToken = hashParams.get('access_token');
+        const type = hashParams.get('type');
+
+        if (!accessToken || type !== 'recovery') {
+          setError('Invalid reset link. Please request a new password reset.');
+          setValidatingToken(false);
+          return;
+        }
+
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+        if (sessionError) {
+          console.error('Session error:', sessionError);
+          setError('Failed to validate reset link. Please try again.');
+          setValidatingToken(false);
+          return;
+        }
+
+        if (!session) {
+          setError('Invalid or expired reset link. Please request a new password reset.');
+          setValidatingToken(false);
+          return;
+        }
+
+        setValidatingToken(false);
+      } catch (err) {
+        console.error('Error validating token:', err);
+        setError('An unexpected error occurred. Please try again.');
+        setValidatingToken(false);
       }
     };
-    checkSession();
-  }, []);
+
+    validateResetToken();
+  }, [location]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,6 +91,56 @@ export function ResetPasswordPage() {
     }
   };
 
+  if (validatingToken) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-brown-100">
+        <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+          <div className="text-center">
+            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-brown-100 mb-4">
+              <svg className="animate-spin h-6 w-6 text-brown-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            </div>
+            <h2 className="text-2xl font-bold text-brown-900 mb-2">Validating Reset Link</h2>
+            <p className="text-brown-600">
+              Please wait while we verify your password reset link...
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-brown-100">
+        <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+          <div className="text-center">
+            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+              <svg className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-bold text-brown-900 mb-4">Reset Link Invalid</h2>
+            <p className="text-red-600 mb-6">
+              {error}
+            </p>
+            <Button onClick={() => navigate('/forgot-password')} className="w-full">
+              Request New Reset Link
+            </Button>
+            <button
+              onClick={() => navigate('/login')}
+              className="mt-3 text-sm text-brown-600 hover:text-brown-800 underline"
+            >
+              Back to Login
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (success) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-brown-100">
@@ -87,12 +172,6 @@ export function ResetPasswordPage() {
           Enter your new password below.
         </p>
 
-        {error && (
-          <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm mb-4">
-            {error}
-          </div>
-        )}
-
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label htmlFor="password" className="block text-sm font-medium text-brown-700 mb-1">
@@ -109,6 +188,7 @@ export function ResetPasswordPage() {
               className="w-full px-3 py-2 border border-brown-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brown-500"
               placeholder="Enter new password"
               minLength={6}
+              disabled={loading}
             />
             <p className="text-xs text-brown-600 mt-1">Must be at least 6 characters</p>
           </div>
@@ -128,6 +208,7 @@ export function ResetPasswordPage() {
               className="w-full px-3 py-2 border border-brown-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brown-500"
               placeholder="Confirm new password"
               minLength={6}
+              disabled={loading}
             />
           </div>
 
@@ -136,8 +217,19 @@ export function ResetPasswordPage() {
             disabled={loading}
             className="w-full"
           >
-            {loading ? 'Resetting...' : 'Reset Password'}
+            {loading ? 'Resetting Password...' : 'Reset Password'}
           </Button>
+
+          <div className="text-center">
+            <button
+              type="button"
+              onClick={() => navigate('/login')}
+              className="text-sm text-brown-600 hover:text-brown-800 underline"
+              disabled={loading}
+            >
+              Cancel
+            </button>
+          </div>
         </form>
       </div>
     </div>
