@@ -14,20 +14,29 @@ export function ResetPasswordPage() {
   const location = useLocation();
 
   useEffect(() => {
+    console.log('=== RESET PASSWORD PAGE LOADED ===');
+    console.log('Full URL:', window.location.href);
+    console.log('Hash:', location.hash);
+    console.log('Search:', location.search);
+    console.log('Pathname:', location.pathname);
+    
     const validateResetToken = async () => {
+      console.log('=== STARTING TOKEN VALIDATION ===');
       setValidatingToken(true);
 
       try {
+        // Check for error parameters first
         const hashParams = new URLSearchParams(location.hash.substring(1));
         const queryParams = new URLSearchParams(location.search);
 
-        const token = hashParams.get('access_token') || hashParams.get('token') || queryParams.get('token');
-        const type = hashParams.get('type') || queryParams.get('type');
+        console.log('Hash params:', Object.fromEntries(hashParams));
+        console.log('Query params:', Object.fromEntries(queryParams));
 
         const errorParam = hashParams.get('error') || queryParams.get('error');
         const errorDescription = hashParams.get('error_description') || queryParams.get('error_description');
 
         if (errorParam) {
+          console.log('ERROR FOUND:', errorParam, errorDescription);
           const decodedError = errorDescription
             ? decodeURIComponent(errorDescription.replace(/\+/g, ' '))
             : 'Invalid or expired reset link';
@@ -36,76 +45,93 @@ export function ResetPasswordPage() {
           return;
         }
 
-        if (!token || type !== 'recovery') {
+        // Get token and type from URL - handle both PKCE and implicit flows
+        const accessToken = hashParams.get('access_token') || queryParams.get('access_token');
+        const refreshToken = hashParams.get('refresh_token') || queryParams.get('refresh_token');
+        const type = hashParams.get('type') || queryParams.get('type');
+        const token = hashParams.get('token') || queryParams.get('token');
+        const code = queryParams.get('code'); // PKCE flow uses 'code' parameter
+
+        console.log('=== TOKEN EXTRACTION ===');
+        console.log('Access Token:', accessToken);
+        console.log('Refresh Token:', refreshToken);
+        console.log('Type:', type);
+        console.log('Generic Token:', token);
+        console.log('Code (PKCE):', code);
+
+        // Handle PKCE flow (code parameter)
+        if (code) {
+          console.log('=== PKCE FLOW DETECTED - Using exchangeCodeForSession ===');
+          
+          const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+          
+          console.log('Code exchange result:', { data, exchangeError });
+
+          if (exchangeError) {
+            console.error('Code exchange error:', exchangeError);
+            setError('Failed to validate reset link. Please try again.');
+            setValidatingToken(false);
+            return;
+          }
+
+          if (!data.session) {
+            console.log('NO SESSION CREATED FROM CODE');
+            setError('Invalid or expired reset link. Please request a new password reset.');
+            setValidatingToken(false);
+            return;
+          }
+
+          console.log('=== SUCCESS - Session established via PKCE ===');
+          setValidatingToken(false);
+          return;
+        }
+
+        // Handle implicit flow (access_token in hash)
+        if (!accessToken && !token) {
+          console.log('NO TOKEN OR CODE FOUND - Setting error');
           setError('Invalid reset link. Please request a new password reset.');
           setValidatingToken(false);
           return;
         }
 
-        if (queryParams.get('token')) {
-          const { error: exchangeError } = await supabase.auth.verifyOtp({
-            token_hash: token,
-            type: 'recovery'
-          });
-
-          if (exchangeError) {
-            console.error('Token exchange error:', exchangeError);
-            setError('Failed to validate reset link. Please request a new one.');
-            setValidatingToken(false);
-            return;
-          }
+        // For implicit flow, check type
+        if (type !== 'recovery') {
+          console.log('WRONG TYPE:', type, '- Setting error');
+          setError('Invalid reset link. Please request a new password reset.');
+          setValidatingToken(false);
+          return;
         }
 
-        let retryCount = 0;
-        const maxRetries = 3;
-        let lastError = null;
+        console.log('=== ATTEMPTING SESSION SETUP (Implicit Flow) ===');
+        
+        // Try to set session with available tokens
+        const tokenToUse = accessToken || token;
+        const { data, error: sessionError } = await supabase.auth.setSession({
+          access_token: tokenToUse,
+          refresh_token: refreshToken || ''
+        });
 
-        while (retryCount < maxRetries) {
-          try {
-            await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
+        console.log('Session setup result:', { data, sessionError });
 
-            const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-            if (sessionError) {
-              if (sessionError.message.includes('issued in the future') ||
-                  sessionError.message.includes('clock skew')) {
-                lastError = sessionError;
-                retryCount++;
-                continue;
-              }
-
-              console.error('Session error:', sessionError);
-              setError('Failed to validate reset link. Please try again.');
-              setValidatingToken(false);
-              return;
-            }
-
-            if (!session) {
-              setError('Invalid or expired reset link. Please request a new password reset.');
-              setValidatingToken(false);
-              return;
-            }
-
-            console.log('Session established successfully for password reset');
-            setValidatingToken(false);
-            return;
-          } catch (err: any) {
-            if (err.message?.includes('issued in the future') ||
-                err.message?.includes('clock skew')) {
-              lastError = err;
-              retryCount++;
-              continue;
-            }
-            throw err;
-          }
+        if (sessionError) {
+          console.error('Session error:', sessionError);
+          setError('Failed to validate reset link. Please try again.');
+          setValidatingToken(false);
+          return;
         }
 
-        console.error('Failed after retries:', lastError);
-        setError('Unable to validate reset link due to timing issues. Please request a new password reset or try again in a few moments.');
+        if (!data.session) {
+          console.log('NO SESSION CREATED');
+          setError('Invalid or expired reset link. Please request a new password reset.');
+          setValidatingToken(false);
+          return;
+        }
+
+        console.log('=== SUCCESS - Session established ===');
         setValidatingToken(false);
 
       } catch (err) {
-        console.error('Error validating token:', err);
+        console.error('=== CATCH ERROR ===', err);
         setError('An unexpected error occurred. Please try again.');
         setValidatingToken(false);
       }
